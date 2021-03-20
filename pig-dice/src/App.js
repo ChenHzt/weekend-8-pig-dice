@@ -3,7 +3,7 @@ import './App.css';
 import ReactDice from 'react-dice-complete'
 import 'react-dice-complete/dist/react-dice-complete.css'
 import React from 'react';
-
+import Confetti from 'react-confetti'
 class ScoreBoard extends React.Component {
 
   render() {
@@ -36,12 +36,27 @@ class CurrentScore extends React.Component {
 class CustomButton extends React.Component{
 
   render(){
+    const enabled = this.props.enabled;
     return (
-      <button className='customButton' onClick={this.props.onClick}>
+      <button className='customButton' disabled={!enabled} onClick={this.props.onClick}>
         {this.props.buttonText}
       </button>
     )
   }
+}
+
+class DisplayWinner extends React.Component{
+  render(){
+    return(
+      <div className="displayWinner">
+        <Confetti/>
+      </div>
+    )
+  }
+}
+
+class GameBoard extends React.Component{
+
 }
 
 class PigDiceGame extends React.Component {
@@ -62,12 +77,14 @@ class PigDiceGame extends React.Component {
       ],
       currentPlayerTurn: 0,
       diceTotal:0,
-      finalScore: 20
+      finalScore: 20,
+      isGameOver:false
     }
   }
 
   handleWinning = (player) =>{
     console.log(`${this.state.players[player].name} won!!!`);
+    this.setState({isGameOver:true});
 
   }
   rollDoneCallback = (num) => {
@@ -76,9 +93,9 @@ class PigDiceGame extends React.Component {
     const currentPlayerturn = this.state.currentPlayerTurn;
     const newArr = this.state.players;
 
-    if(num >=10){
+    if(num ===12){
       newArr[currentPlayerturn].currentScore=0;
-      this.setState({currentPlayerTurn:(currentPlayerturn+1)%2, players:newArr});
+      setTimeout(() => this.setState({currentPlayerTurn:(currentPlayerturn+1)%2, players:newArr}),2000)
       
     }
     else{
@@ -118,24 +135,29 @@ class PigDiceGame extends React.Component {
 
   render() {
     console.log(this.state);
+    let winning;
+    if(this.state.isGameOver) winning= <h1>{`And the winner is:`}</h1>;
+
+    else winning = null
     return (
       <div className="container">
+
         <ScoreBoard players={this.state.players} currentPlayer={this.state.currentPlayerTurn}/>
-        
+        {winning}
+        <GameBoard isGameOver={this.state.isGameOver} players={this.state.players} currentPlayerTurn={this.state.currentPlayerTurn}/>
         <h1 className='currentPlayerTitle'>{this.state.players[this.state.currentPlayerTurn ].name}</h1>
         <ReactDice
             numDice={2}
             rollTime={1}
             rollDone={this.rollDoneCallback}
             ref={dice => this.reactDice = dice}
-            dieSize={100}
+            dieSize={80}
             disableIndividual={true}
           />
           <CurrentScore currentScore={this.state.players[this.state.currentPlayerTurn].currentScore} />
-
-          <CustomButton buttonText='ROLL' onClick={this.rollClicked}/>
-          <CustomButton buttonText='HOLD' onClick={this.holdClicked}/>
-          <CustomButton buttonText='NEW GAME' onClick={this.newGameClicked}/>
+          <CustomButton buttonText='ROLL' enabled={!this.state.isGameOver} onClick={this.rollClicked}/>
+          <CustomButton buttonText='HOLD' enabled={!this.state.isGameOver} onClick={this.holdClicked}/>
+          <CustomButton buttonText='NEW GAME' enabled={true} onClick={this.newGameClicked}/>
           <input type="text" value={this.state.finalScore} onChange={(event) => this.setState({finalScore:event.target.value})}/>
       </div>
     )
